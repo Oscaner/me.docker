@@ -1,0 +1,17 @@
+{
+  "xml": {
+    "handler": "issueviews",
+    "key": "issue-xml",
+    "ext": "xml"
+  },
+  "doc": {
+    "handler": "issueviews",
+    "key": "issue-word",
+    "ext": "doc"
+  },
+  "html": {
+    "handler": "issueviews",
+    "key": "issue-html",
+    "ext": "html"
+  }
+}
