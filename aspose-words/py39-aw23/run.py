@@ -1,40 +1,55 @@
 import os
+import gc
+from pathlib import Path
 import aspose.words as aw
 from natsort import natsorted
 
-FROM_EXT = os.getenv('FROM_EXT')
 TO_EXT = os.getenv('TO_EXT')
 
-print(f'ENV: FROM [.{FROM_EXT}] TO [.{TO_EXT}]')
+print(f'ENV: FROM source TO [.{TO_EXT}]')
 
-from_files = natsorted([
-  f for f in os.listdir(f'/workspace/{FROM_EXT}') if f.endswith(f'.{FROM_EXT}')
-])
+# list all files in source and subfolders
+source_files = []
+for root, dirs, files in os.walk(f'/workspace/source'):
+  for file in files:
+    if file.startswith('.'): continue
+    source_files.append(os.path.join(root, file))
+source_files = natsorted(source_files)
 
-for from_file in from_files:
-  to_file = from_file.replace('.' + FROM_EXT, '.' + TO_EXT)
+for from_index, from_file in enumerate(source_files):
+  from_path = Path(from_file)
+  to_path = str(from_path.with_suffix('.' + TO_EXT)).replace('/workspace/source', f'/workspace/{TO_EXT}')
 
   print(f'⌛️ {from_file}')
 
-  from_path = f'/workspace/{FROM_EXT}/{from_file}'
-  to_path = f'/workspace/{TO_EXT}/{to_file}'
   basename = os.path.basename(to_path).replace('.' + TO_EXT, '')
 
   if os.path.exists(to_path):
-    print(f'👉 {to_file} already exists')
+    print(f'👉 {to_path} already exists')
     continue
 
-  doc = aw.Document(from_path)
-  doc.save(to_path)
+  try:
+    doc = aw.Document(str(from_path))
+    doc.save(to_path)
+  except Exception as err:
+    print(f'❌ {to_path}: {err}')
+    continue
 
   if TO_EXT == 'md':
     file = open(to_path, mode='r')
-    lines = file.readlines()
-    lines = [line for line in lines if f'![]({basename}.001.png)' not in line]
+    lines = file.readlines()[1:]
     lines = [line for line in lines if 'Evaluation Only. Created with Aspose.Words' not in line]
     lines = [line for line in lines if 'Created with an evaluation copy of Aspose.Words' not in line]
+    file.close()
 
     file = open(to_path, mode='w')
     file.writelines(lines)
+    file.close()
 
-  print(f'✅ {to_file}')
+    del file, lines
+
+  print(f'✅ {to_path}')
+
+  # free memory every 5 files
+  if from_index % 5 == 0:
+    gc.collect()
