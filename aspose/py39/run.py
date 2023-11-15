@@ -1,8 +1,15 @@
+import jpype
+jpype.startJVM()
+
 import os
 import gc
 from pathlib import Path
-import aspose.words as aw
 from natsort import natsorted
+import aspose.words as aw
+import aspose.slides as slides
+import asposecells.api as cells
+
+aw.License().set_license(os.getenv('AW_LIC', ''))
 
 TO_EXT = os.getenv('TO_EXT')
 
@@ -29,8 +36,15 @@ for from_index, from_file in enumerate(source_files):
     continue
 
   try:
-    doc = aw.Document(str(from_path))
-    doc.save(to_path)
+    if from_path.suffix in ['.pptx', '.ppt']:
+      presentation = slides.Presentation(str(from_path))
+      presentation.save(to_path, slides.export.SaveFormat[TO_EXT.upper()])
+    if from_path.suffix in ['.xlsx', '.xls']:
+      workbook = cells.Workbook(str(from_path))
+      workbook.save(to_path, cells.SaveFormat['MARKDOWN' if TO_EXT == 'md' else TO_EXT.upper()])
+    else:
+      doc = aw.Document(str(from_path))
+      doc.save(to_path)
   except Exception as err:
     print(f'❌ {to_path}: {err}')
     continue
@@ -38,8 +52,8 @@ for from_index, from_file in enumerate(source_files):
   if TO_EXT == 'md':
     file = open(to_path, mode='r')
     lines = file.readlines()[1:]
-    lines = [line for line in lines if 'Evaluation Only. Created with Aspose.Words' not in line]
-    lines = [line for line in lines if 'Created with an evaluation copy of Aspose.Words' not in line]
+    lines = [line for line in lines if 'Evaluation Only. Created with Aspose' not in line]
+    lines = [line for line in lines if 'Created with an evaluation copy of Aspose' not in line]
     file.close()
 
     file = open(to_path, mode='w')
@@ -53,3 +67,5 @@ for from_index, from_file in enumerate(source_files):
   # free memory every 5 files
   if from_index % 5 == 0:
     gc.collect()
+
+jpype.shutdownJVM()

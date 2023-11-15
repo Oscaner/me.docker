@@ -29,6 +29,6 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ./aspose-words/py39-aw23
+          context: ./aspose/py39
           push: true
-          tags: oscaner/aspose-words:py39-aw23
+          tags: oscaner/aspose:py39
