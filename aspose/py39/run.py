@@ -62,6 +62,11 @@ for from_index, from_file in enumerate(source_files):
 
     del file, lines
 
+  # delete aspose logo
+  aspose_logo = to_path.replace(f".{TO_EXT}", '.001.png')
+  if os.path.exists(aspose_logo):
+    os.remove(aspose_logo)
+
   print(f'✅ {to_path}')
 
   # free memory every 5 files
